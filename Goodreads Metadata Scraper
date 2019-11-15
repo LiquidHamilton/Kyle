@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# Goodreads Metadata Scraper
+# 2019, Kyle Carroll
+
+from urllib.request import urlopen
+import xml.etree.ElementTree as ET
+
+# apiKey = 'hrMPgTDm40OGEaq5tLNw7Q'
+
+
+def getQuery():
+    query = input('Enter an ISBN: ')
+    queryURL = urlopen(
+        f'https://www.goodreads.com/search.xml?key=hrMPgTDm40OGEaq5tLNw7Q&q={query}')
+    tree = ET.parse(queryURL)
+    root = tree.getroot()
+    for book in root.findall('./search/results/work/best_book/id'):
+        bookID = (book.text)
+        break
+    metadataURL = urlopen(
+        f'https://www.goodreads.com/book/show/{bookID}?format=xml&key=hrMPgTDm40OGEaq5tLNw7Q')
+    return metadataURL
+
+
+def getMetadata(metadataURL):
+    tree2 = ET.parse(metadataURL)
+    root2 = tree2.getroot()
+    author = []
+    title = None
+    coverImageURL = None
+    year = None
+    month = None
+    pages = None
+    summary = None
+    seriesTitle = None
+    seriesIndex = None
+    isbn = None
+    publisher = None
+    series = None
+
+    for t in root2.findall('./book/title'):
+        title = t.text
+    for a in root2.findall('./book/authors/author/name'):
+        author.append(a.text)
+    for i in root2.findall('./book/image_url'):
+        coverImageURL = i.text
+    for y in root2.findall('./book/work/original_publication_year'):
+        year = y.text
+    for m in root2.findall('./book/work/original_publication_month'):
+        month = m.text
+    for p in root2.findall('./book/num_pages'):
+        pages = p.text
+    for d in root2.findall('./book/description'):
+        summary = d.text
+    for s in root2.findall('./book/series_works/series_work/series/title'):
+        seriesTitle = s.text
+        seriesTitle = seriesTitle.strip()
+        break
+    for x in root2.findall('./book/series_works/series_work/user_position'):
+        seriesIndex = x.text
+        break
+    for n in root2.findall('./book/isbn13'):
+        isbn = n.text
+    for u in root2.findall('./book/publisher'):
+        publisher = u.text
+    if seriesTitle != None and seriesIndex != None:
+        series = f'{seriesTitle} [{seriesIndex}]'
+    elif seriesTitle != None and seriesIndex == None:
+        series = seriesTitle
+
+    metadataDict = {
+        'title': title,
+        'author': ', '.join(author),
+        'summary': summary,
+        'pages': pages,
+        'coverImageURL': coverImageURL,
+        'year': year,
+        'month': month,
+        'series': series,
+        'isbn': isbn,
+        'publisher': publisher,
+    }
+    return metadataDict
+
+
+def main():
+    metadataURL = getQuery()
+    metadata = getMetadata(metadataURL)
+    print(metadata)
+
+
+if __name__ == "__main__":
+    main()
