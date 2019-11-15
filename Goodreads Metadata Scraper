@@ -86,7 +86,6 @@ def getMetadata(metadataURL):
 def main():
     metadataURL = getQuery()
     metadata = getMetadata(metadataURL)
-    print(metadata)
 
 
 if __name__ == "__main__":
