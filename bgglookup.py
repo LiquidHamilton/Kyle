@@ -10,7 +10,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget, QLabel, QListWidget, QGridLayout
 import boardgamegeek
 from urllib.request import urlopen
-import sys
 
 
 class Ui_MainWindow(object):
@@ -95,7 +94,9 @@ class Ui_MainWindow(object):
             self.g.id
             self.metadata = self.lookup(self.idcheck)
         except:
-            pass
+            self.bgg = boardgamegeek.BGGClient()
+            self.search = self.bgg.search(self.query)
+            self.g = self.popup(self.search)
 
     def search(self, z):
         try:
@@ -103,45 +104,49 @@ class Ui_MainWindow(object):
             self.g = self.bgg.game(z)
             return(self.g.id)
         except:
-            self.bgg = boardgamegeek.BGGClient()
-            self.search = self.bgg.search(z)
-            self.g = self.popup(self.search)
+            pass
 
     def popup(self, searchItem):
         self.exPopup = searchPopup(searchItem)
         self.exPopup.show()
 
     def lookup(self, y):
-        self.bgg = boardgamegeek.BGGClient()
-        self.g = self.bgg.game(game_id=y)
-        self.lineEdit.setText('')
-        self.label_3.setText(f"{self.g.name} ({self.g.year})")
-        self.label_4.setText(f"BGG Rank: {self.g.bgg_rank}")
-        self.label_5.setText(
-            f"Average Rating: {round(self.g.rating_average,2)}")
-        self.label_6.setText(
-            f"Rated Weight: {round(self.g.rating_average_weight, 2)}/5")
-        if self.g.min_playing_time != self.g.max_playing_time:
-            self.label_65.setText(
-                f"Play Time: {self.g.min_playing_time} - {self.g.max_playing_time} Minutes")
-        else:
-            self.label_65.setText(
-                f"Play Time: {self.g.min_playing_time} Minutes")
-        if self.g.min_players != self.g.max_players:
-            self.label_7.setText(
-                f"Player Count: {self.g.min_players} - {self.g.max_players}")
-        else:
-            self.label_7.setText(f"Player Count: {self.g.min_players}")
-        # self.label_8.setText(f"Best Player Count: {self.g.PlayerSuggestion()}")
+        # try:
+        y = self.exPopup.selection
+        print(y)
+        # except:
+        #     y = y
+        #     self.bgg = boardgamegeek.BGGClient()
+        #     self.g = self.bgg.game(game_id=y)
+        #     self.lineEdit.setText('')
+        #     self.label_3.setText(f"{self.g.name} ({self.g.year})")
+        #     self.label_4.setText(f"BGG Rank: {self.g.bgg_rank}")
+        #     self.label_5.setText(
+        #         f"Average Rating: {round(self.g.rating_average,2)}")
+        #     self.label_6.setText(
+        #         f"Rated Weight: {round(self.g.rating_average_weight, 2)}/5")
+        #     if self.g.min_playing_time != self.g.max_playing_time:
+        #         self.label_65.setText(
+        #             f"Play Time: {self.g.min_playing_time} - {self.g.max_playing_time} Minutes")
+        #     else:
+        #         self.label_65.setText(
+        #             f"Play Time: {self.g.min_playing_time} Minutes")
+        #     if self.g.min_players != self.g.max_players:
+        #         self.label_7.setText(
+        #             f"Player Count: {self.g.min_players} - {self.g.max_players}")
+        #     else:
+        #         self.label_7.setText(f"Player Count: {self.g.min_players}")
 
-        self.imageData = urlopen(self.g.image).read()
-        pixmap = QtGui.QPixmap()
-        pixmap.loadFromData(self.imageData)
-        self.imageLabel.setPixmap(QtGui.QPixmap(pixmap))
+        #     self.players = self.g.player_suggestions
+        #     for x in self.players:
+        #         print(boardgamegeek.utils.DictObject.data(x))
 
-        # players = g.player_suggestions
-        # for x in players:
-        #     print(boardgamegeek.utils.DictObject.data(x))
+        #     # self.label_8.setText(f"Best Player Count: {self.g.PlayerSuggestion()}")
+
+        #     self.imageData = urlopen(self.g.image).read()
+        #     pixmap = QtGui.QPixmap()
+        #     pixmap.loadFromData(self.imageData)
+        #     self.imageLabel.setPixmap(QtGui.QPixmap(pixmap))
 
 
 class searchPopup(QWidget):
@@ -157,17 +162,16 @@ class searchPopup(QWidget):
         index = 0
         for x in results:
             self.listwidget.insertItem(index, (f"{x.name} ({x.year})"))
-            # self.listwidget.insertItem(index, x.name)
             index += 1
         self.listwidget.clicked.connect(self.clicked)
         layout.addWidget(self.listwidget)
 
     def clicked(self, qmodelindex):
         self.item = self.listwidget.currentItem()
-        print(self.item.text())
         self.row = self.listwidget.currentRow()
-        self.selection = self.results[self.row]
-        print(self.selection.id)
+        self.selectionindex = self.results[self.row]
+        self.selection = self.selectionindex.id
+        Ui_MainWindow.lookup(self, None)
         self.hide()
 
 
